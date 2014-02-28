@@ -1,0 +1,14 @@
+{
+  "name": "stereolux-domotique",
+  "description": "stereolux residence on domotique",
+  "private": false,
+  "version": "0.0.0",
+  "dependencies": {
+    "q": "~0.9.7",
+    "onoff": "0.3.0",
+    "node-osc": "0.2.1"
+  },
+  "engines": {
+    "node": ">=0.8.0"
+  }
+}
