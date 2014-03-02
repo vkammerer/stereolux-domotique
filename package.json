@@ -1,12 +1,13 @@
 {
   "name": "stereolux-domotique",
-  "description": "stereolux residence on domotique",
+  "description": "controller application for the installation created at the Stereolux home automation residence",
   "private": false,
   "version": "0.0.0",
   "dependencies": {
     "q": "~0.9.7",
     "onoff": "0.3.0",
-    "node-osc": "0.2.1"
+    "node-osc": "0.2.1",
+    "connect": "~2.13.0"
   },
   "engines": {
     "node": ">=0.8.0"

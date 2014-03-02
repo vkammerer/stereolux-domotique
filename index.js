@@ -2,7 +2,8 @@ var fs = require('fs'),
 	pilight = require('../node-pilight/pilight'),
 	Gpio = require('onoff').Gpio,
 	Q = require('q'),
-	osc = require('node-osc');
+	osc = require('node-osc'),
+	connect = require('connect');
 
 var pinsConfigFilePath = './pins.json',
 	everflourishProtocolFilePath = '../node-pilight/protocols/everflourish-EMWT200T_EMW201R.json',
@@ -188,6 +189,7 @@ Q.all([qPins.promise, qEverflourish.promise, qKaku.promise]).spread(
 		pins.forEach(function(pin){
 			var thisInput = new Gpio(parseInt(pin.number), 'in', 'both', {persistentWatch: true});
 			thisInput.watch(function(err, value) {
+				console.log(value);
 				if (pin.control === 'kaku') {
 					watchKakuPin(pin, value);
 				}
@@ -199,6 +201,14 @@ Q.all([qPins.promise, qEverflourish.promise, qKaku.promise]).spread(
 				}
 			});
 		})
+
+		/*
+		  Digital interface
+		*/
+		connect.createServer(
+			connect.static(__dirname + '/public')
+		).listen(8080);
+
 	},
 	function (reason) {
 		console.log('Configuration files not read: ' + reason)
