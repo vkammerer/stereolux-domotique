@@ -5,9 +5,10 @@
   "version": "0.0.0",
   "dependencies": {
     "q": "~0.9.7",
-    "onoff": "0.3.0",
     "node-osc": "0.2.1",
-    "connect": "~2.13.0"
+    "connect": "~2.13.0",
+    "socket.io": "~0.9.16",
+    "gpio": "0.2.5"
   },
   "engines": {
     "node": ">=0.8.0"

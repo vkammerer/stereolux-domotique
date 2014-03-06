@@ -1,0 +1,81 @@
+{
+	"p1p1" : {
+		"number": 11,
+		"control": "kaku",
+		"unit": "0"
+	},
+	"p1p2" : {
+		"number": 9,
+		"control": "kaku",
+		"unit": "1"
+	},
+	"p1p3" : {
+		"number": 10,
+		"control": "everflourish",
+		"unit": "C1"
+	},
+	"p1p4" : {
+		"number": 22,
+		"control": "everflourish",
+		"unit": "C2"
+	},
+	"p1p5" : {
+		"number": 27,
+		"control": "everflourish",
+		"unit": "C3"
+	},
+	"p1p6" : {
+		"number": 17,
+		"control": "everflourish",
+		"unit": "D1"
+	},
+	"p2p1" : {
+		"number": 7,
+		"control": "osc",
+		"host": "192.168.51.227",
+		"port" : 9000,
+		"color": "white"
+	},
+	"p2p2" : {
+		"number": 8,
+		"control": "osc",
+		"host": "192.168.51.227",
+		"port" : 9000,
+		"color": "scenario"
+	},
+	"p2p3" : {
+		"number": 25,
+		"control": "osc",
+		"host": "192.168.51.227",
+		"port" : 9000,
+		"color": "red"
+	},
+	"p2p4" : {
+		"number": 24,
+		"control": "osc",
+		"host": "192.168.51.227",
+		"port" : 9000,
+		"color": "green"
+	},
+	"p2p5" : {
+		"number": 23,
+		"control": "osc",
+		"host": "192.168.51.227",
+		"port" : 9000,
+		"color": "blue"
+	},
+	"p3p1" : {
+		"number": 3,
+		"control": "osc",
+		"host": "192.168.51.227",
+		"port" : 9000,
+		"color": "rede"
+	},
+	"p3p2" : {
+		"number": 2,
+		"control": "osc",
+		"host": "192.168.51.227",
+		"port" : 9000,
+		"color": "rede"
+	}
+}

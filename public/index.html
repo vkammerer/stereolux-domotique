@@ -1,23 +1,47 @@
 <html>
 <head>
-<style type="text/css">
-#container {
-	position: relative;
-	width: 1420px;
-	height: 924px;
-	margin: auto;
-	background: black;
-}
-#container #panel1pin1 {
-	fill:red;
-}
-</style>
-
+	<link rel="stylesheet" type="text/css" href="css/main.css">
 </head>
 <body>
-	<div id="container">
+<!--
+<div style="position:relative;overflow:hidden;">
+	<svg id='pattern' xmlns="http://www.w3.org/2000/svg" version="1.1" style="position:absolute">
+		<defs>
+		    <pattern id="image1" patternUnits="userSpaceOnUse" width="2400" height="1278">
+		        <image xlink:href="images/large.jpg" x="0" y="0" width="2400" height="1278" />
+		    </pattern>
+		    <pattern id="image2" patternUnits="userSpaceOnUse" width="2400" height="1278">
+		        <image xlink:href="images/large.jpg" x="200" y="0" width="2400" height="1278" />
+		    </pattern>
+		    <pattern id="image3" patternUnits="userSpaceOnUse" width="2400" height="1278">
+		        <image xlink:href="images/large.jpg" x="0" y="0" width="2400" height="1278" />
+		    </pattern>
+		    <pattern id="image4" patternUnits="userSpaceOnUse" width="2400" height="1278">
+		        <image xlink:href="images/large.jpg" x="0" y="0" width="2400" height="1278" />
+		    </pattern>
+		</defs>
+	</svg>
+</div>
+-->
+<div id="modelcontainer">
+	<div id="model">
+		<div id="htmlmodel">
+			<div id="p2bgH" class="toprounded">
+				<video autoplay muted loop><source src="media/yo.webm" type="video/mp4"></video>
+			</div>
+			<div id="p1bgH" class="toprounded">
+				<video autoplay muted loop><source src="media/claude.mp4" type="video/mp4"></video>
+			</div>
+			<div id="p3bgH" class="toprounded">
+				<video autoplay muted loop><source src="media/claude2.mp4" type="video/mp4"></video>
+			</div>
+			<div id="bottombgH"></div>
+		</div>
+		<svg id="svgmodel"></svg>
 	</div>
+</div>
+<script type="text/javascript" src="bower_components/snap.svg/dist/snap.svg-min.js"></script>
+<script type="text/javascript" src="bower_components/socket.io-client/dist/socket.io.min.js"></script>
+<script type="text/javascript" src="js/main.js"></script>
 </body>
-
-
 </html>

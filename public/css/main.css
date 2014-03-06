@@ -1,0 +1,76 @@
+body {
+	padding: 0;
+	margin:0;
+	background: black;
+}
+
+#modelcontainer {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+/*
+body.mousedown #modelcontainer {
+	opacity: 0;
+}
+*/
+#model {
+	position: relative;
+	z-index: 2;
+	width: 1438px;
+	height: 942px;
+	margin: auto;
+	-webkit-transform: perspective( 1000px ) rotateX( 0deg ) translateY(0px) translateZ(0px)
+}
+#htmlmodel {
+	position: absolute;	
+	z-index: 1;
+	left:10px;
+	top: 10px;
+}
+#htmlmodel > div {
+	position: absolute;
+	height: 100px;
+	width: 100px;
+	left: 0;
+	top: 0;
+	overflow: hidden;
+	background: red;
+}
+#htmlmodel .toprounded {
+	border-radius: 142px 142px 0 0;	
+}
+#htmlmodel #bottombgH {
+	background: white;
+}
+#svgmodel {
+	position: absolute;	
+	z-index: 10;
+}
+#svgmodel [id*=bg] {
+	fill:transparent;
+	stroke-width: 0;
+}
+path[id^=p1p],
+path[id^=p2p],
+path[id^=p3p] {
+	fill:#000;
+	stroke: #000;
+}
+.clicked {
+	fill:#444;
+}
+video {
+	display: none;
+}
+/*
+body {
+	overflow: hidden;
+}
+#model {
+	position: absolute;
+	margin: -471px -719px;
+	top: 50%;
+	left: 50%;
+}
+*/

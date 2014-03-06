@@ -1,23 +1,24 @@
 var fs = require('fs'),
+	http = require('http'),
+	url = require("url"),
 	pilight = require('../node-pilight/pilight'),
-	Gpio = require('onoff').Gpio,
+	gpio = require("gpio"),
 	Q = require('q'),
 	osc = require('node-osc'),
-	connect = require('connect');
+	connect = require('connect'),
+	requireio = require('socket.io');
 
-var pinsConfigFilePath = './pins.json',
+var controllersConfigFilePath = './public/controllers.json',
 	everflourishProtocolFilePath = '../node-pilight/protocols/everflourish-EMWT200T_EMW201R.json',
 	kakuConfigFilePath = '../node-pilight/config/kaku.json',
 	dmxcontroler = {
-		host : '192.168.51.227',
-		port : 9000
+		host : '192.168.54.235',
+		port : 12345
 	}
 
 var qPins = Q.defer();
 
-	console.log('pins');
-
-fs.readFile(pinsConfigFilePath, function (err, data) {
+fs.readFile(controllersConfigFilePath, function (err, data) {
 	if (err) throw err;
 	qPins.resolve(JSON.parse(data));
 
@@ -28,7 +29,7 @@ fs.readFile(pinsConfigFilePath, function (err, data) {
 			{
 				number: 23,
 				control : 'kaku',
-				plugunit : '1',
+				unit : '1',
 				upDate : Date.now(),
 				dimming : false
 			},
@@ -36,7 +37,7 @@ fs.readFile(pinsConfigFilePath, function (err, data) {
 			{
 				number: 23,
 				control : 'everflourish',
-				plugunit : 'A1'
+				unit : 'A1'
 			},
 		// osc
 			{
@@ -66,16 +67,39 @@ fs.readFile(kakuConfigFilePath, function (err, data) {
 var dmxcontrolerClient = new osc.Client(dmxcontroler.host, dmxcontroler.port);
 
 Q.all([qPins.promise, qEverflourish.promise, qKaku.promise]).spread(
-	function (pins, everflourish, kaku){
+	function (controllers, everflourish, kaku){
 
-		var sendEverflourish = function(ref, status){
+		console.log('Config files read');
+
+		io = requireio.listen(8082);
+		io.sockets.on('connection', function (socket) {
+			socket.on('controller', function (data) {
+				console.log(data);
+				var controller = controllers[data.controller];
+				if (controller) {
+					if (controller.control === 'kaku') {
+						watchKakuPin(controller, data.value);
+					}
+					else if (controller.control === 'everflourish') {
+						watchEverflourishPin(controller, data.value);
+					}
+					else if (controller.control === 'osc') {
+						watchOscPin(controller, data.value);
+					}						
+				}
+			});
+		});
+
+		console.log('Websocket server started on port 8082'); 
+
+		var sendEverflourish = function(unit, state){
 			var thisDefer = Q.defer();
-			var onoff = status ? 'on' : 'off';
+			var onoff = state ? 'on' : 'off';
 			var messageContent = {
 				message: 'send',
 				code: {
 					protocol:  [ 'raw' ],
-					code: everflourish[ref][onoff]
+					code: everflourish[unit][onoff]
 				}
 			}
 			pilight.send(messageContent).then(function(){
@@ -84,29 +108,16 @@ Q.all([qPins.promise, qEverflourish.promise, qKaku.promise]).spread(
 			return thisDefer.promise;
 		}
 
-		var sendKakuSwitch = function(ref, status){
+		var sendKakuSwitch = function(unit, state){
 			var thisDefer = Q.defer();
+			var onoff = state ? 'on' : 'off';
 			var messageContent = {
 				message: 'send',
 				code: JSON.parse(JSON.stringify(kaku))
 			}
-			messageContent.code['unit'] = ref;
-			var onoff = status ? 'on' : 'off';
-			messageContent.code[onoff] = onoff;
-			pilight.send(messageContent).then(function(){
-				thisDefer.resolve();
-			});
-			return thisDefer.promise;
-		}
-
-		var sendKakuDimmer = function(ref,dimlevel){
-			var thisDefer = Q.defer();
-			var messageContent = {
-				message: 'send',
-				code: JSON.parse(JSON.stringify(kaku))
-			}
-			messageContent.code['unit'] = ref;
-			messageContent.code['dimlevel'] = dimlevel.toString();
+			messageContent.code['protocol'] = ['kaku_switch'];
+			messageContent.code['unit'] = unit;
+			messageContent.code[onoff] = 1;
 			pilight.send(messageContent).then(function(){
 				thisDefer.resolve();
 			});
@@ -116,52 +127,53 @@ Q.all([qPins.promise, qEverflourish.promise, qKaku.promise]).spread(
 		/*
 		  Dimmer logic
 		*/
-		var pinToggleKaku = function(pin){
-			sendKakuSwitch(pin.plugunit, !pin.state);
-			pin.state = !pin.state;
-			pin.dimming = false;
+		var controllerToggleKaku = function(controller){
+			sendKakuSwitch(parseInt(controller.unit), !controller.state);
+			controller.state = !controller.state;
+			controller.dimming = false;
 		}
-		var pinDimKaku = function(pin){
-			if ((typeof(pin.state) === 'undefined') || (pin.state === false)) {
-				sendKakuSwitch(pin.plugunit, true).then(function(){
+		var controllerDimKaku = function(controller){
+			if ((typeof(controller.state) === 'undefined') || (controller.state === false)) {
+				sendKakuSwitch(parseInt(controller.unit), true).then(function(){
 					setTimeout(function(){
-						if (pin.dimming) {
-							sendKakuSwitch(pin.plugunit, true);
+						if (controller.dimming) {
+							sendKakuSwitch(parseInt(controller.unit), true);
 						}
 					},1000)
 				});
 			}
 			else {
-				sendKakuSwitch(pin.plugunit, true);
+				sendKakuSwitch(parseInt(controller.unit), true);
 			}
-			pin.state = true;
-			pin.dimming = true;
+			controller.state = true;
+			controller.dimming = true;
 		}
-		var pinDimKakuStop = function(pin){
-			if (pin.dimming) {
-				sendKakuSwitch(pin.plugunit, true);
-				pin.state = true;
+		var controllerDimKakuStop = function(controller){
+			if (controller.dimming) {
+				sendKakuSwitch(parseInt(controller.unit), true);
+				controller.state = true;
 			}
-			pin.dimming = false;
+			controller.dimming = false;
 		}
 
-		var watchKakuPin = function(pin, value){
+		var watchKakuPin = function(controller, value){
+			value = parseInt(value);
 
 			if (value === 1) {
-				pin.upDate = Date.now();
-				pin.timeout = setTimeout(function(){
-					pinDimKaku(pin);
+				controller.upDate = Date.now();
+				controller.timeout = setTimeout(function(){
+					controllerDimKaku(controller);
 				},1000);
 			}
 			else if (value === 0) {
-				clearTimeout(pin.timeout);
-				var dateDiff = Date.now() - pin.upDate;
+				clearTimeout(controller.timeout);
+				var dateDiff = Date.now() - controller.upDate;
 
 				if (dateDiff < 1000) {
-					pinToggleKaku(pin)
+					controllerToggleKaku(controller)
 				}
 				else {
-					pinDimKakuStop(pin);
+					controllerDimKakuStop(controller);
 				}
 			}
 		}
@@ -169,45 +181,65 @@ Q.all([qPins.promise, qEverflourish.promise, qKaku.promise]).spread(
 		/*
 		  Switch logic
 		*/
-		var watchEverflourishPin = function(pin, value){
+		var watchEverflourishPin = function(controller, value){
+			value = parseInt(value);
 			if (value === 0) {
-				sendEverflourish(pin.plugunit, !pin.state);
-				pin.state = !pin.state;
+				sendEverflourish(controller.unit, !controller.state);
+				controller.state = !controller.state;
 			}
 		}
 
 		/*
 		  Osc logic
 		*/
-		var watchOscPin = function(pin, value){
-			oscClient.send('/touch' + pin.color, value);
+		var watchOscPin = function(controller, value){
+			console.log(value);
+			dmxcontrolerClient.send('/touch' + controller.color, value);
 		}
 
 		/*
-		  Initialize pins listeners
+		  Initialize controllers listeners
 		*/
-		pins.forEach(function(pin){
-			var thisInput = new Gpio(parseInt(pin.number), 'in', 'both', {persistentWatch: true});
-			thisInput.watch(function(err, value) {
-				console.log(value);
-				if (pin.control === 'kaku') {
-					watchKakuPin(pin, value);
+
+		console.log('Initializing controllers listeners');
+
+		var pins = {};
+
+		for (var controller in controllers) {
+
+			pins[controllers[controller].number] = controllers[controller];
+
+			var thisInput = gpio.export(parseInt(controllers[controller].number), {direction: "in"});
+			thisInput.on("change", function(value) {
+
+				var thisPin = pins[this.headerNum];
+				console.log(thisPin.number + ':' + value);
+				if (thisPin.control === 'kaku') {
+					watchKakuPin(thisPin, value);
 				}
-				else if (pin.control === 'everflourish') {
-					watchEverflourishPin(pin, value);
+				else if (thisPin.control === 'everflourish') {
+					watchEverflourishPin(thisPin, value);
 				}
-				else if (pin.control === 'osc') {
-					watchOscPin(pin, value);
+				else if (thisPin.control === 'osc') {
+					watchOscPin(thisPin, value);
 				}
 			});
-		})
+		}
 
 		/*
-		  Digital interface
+			Digital interface
 		*/
-		connect.createServer(
-			connect.static(__dirname + '/public')
-		).listen(8080);
+
+		var app = connect()
+			.use(connect.static('public'))
+			.use(connect.bodyParser())
+			.use(function(req, res){
+				res.end('');
+			})
+
+		console.log('Server started');
+
+		http.createServer(app).listen(8080);
 
 	},
 	function (reason) {
